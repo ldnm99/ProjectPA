@@ -1,49 +1,81 @@
-class XML_Prolog() {
-    var  version: String?= null
-    var encoding: String?= null
+import javax.lang.model.type.NullType
+
+class Prolog() {
+    var version: String? = null
+    var encoding: String? = null
+
+    fun setHeader(value1: String, value2:String) {
+        version  = value1
+        encoding = value2
+    }
 }
 
-abstract class XML_Element {
+abstract class Element {
     var name: String? = null
-    var parent: XML_Element? = null
+    var parent: Element? = null
 }
 
-class XML_Object: XML_Element() {
-    var xmlContent = mutableListOf<XML_Element>()
+class Object: Element() {
 
-    fun setProperty(key: String, xmlElement: XML_Element) {
-        val newElement: XML_Element?
+    var xmlContent = mutableListOf<Element>()
+
+    // revisit recursive stuff
+    // one function for arrays and one for the rest
+    private fun temp(array: Array, xmlElement: Element) {
+        val newElement: Element?
         when (xmlElement) {
-            is XML_Object -> {
-                newElement = XML_Object()
+            is Object -> {
+                newElement = Object()
+                xmlElement.xmlContent.forEach {newElement.setProperty(it.name!!, it)}
             }
-            is XML_Array -> {
-                newElement = XML_Array(xmlElement.value)
+            is Array -> {
+                newElement = Array(xmlElement.value)
+                newElement.value.forEach{temp(newElement, it)}
             }
-            is XML_Text -> XML_Text(xmlElement.value)
-            is XML_Attribute -> newElement = XML_Attribute(xmlElement.value)
-            is XML_Null -> newElement = XML_Null(xmlElement.value)
+            is Text -> newElement = Text(xmlElement.value)
+            is Attribute -> newElement = Attribute(xmlElement.value)
+            is Null -> newElement = Null(xmlElement.value)
             else -> newElement = null
         }
-        this.xmlContent.add(newElement)
+        newElement!!.parent = array
+        array.children.add(newElement)
     }
 
+    fun setProperty(name: String, xmlElement: Element) {
+        val newElement: Element?
+        when (xmlElement) {
+            is Object -> {
+                newElement = Object()
+                xmlElement.xmlContent.forEach {newElement.setProperty(it.name!!, it)}
+            }
+            is Array -> {
+                newElement = Array(xmlElement.value)
+                newElement.value.forEach {temp(newElement, it)}
+            }
+            is Text -> newElement = Text(xmlElement.value)
+            is Attribute -> newElement = Attribute(xmlElement.value)
+            is Null -> newElement = Null(xmlElement.value)
+            else -> newElement = null
+        }
+        newElement!!.parent = this
+        newElement.name = name
+        this.xmlContent.add(newElement)
+    }
+}
+
+class Array(var value: kotlin.Array<Element>): Element() {
+    var children = mutableListOf<Element>()
+}
+
+class Text(var value: String): Element() {
 
 }
 
-class XML_Array(var value: Array<XML_Element>): XML_Element() {
-    var children = mutableListOf<XML_Element>()
-}
-
-class XML_Text(var value: String): XML_Element() {
+class Attribute(var value: String): Element() {
 
 }
 
-class XML_Attribute(var value: String): XML_Element() {
-
-}
-
-class XML_Null(var value: NullType?): XML_Element() { // "null"
+class Null(var value: NullType?): Element() {
 
 }
 
