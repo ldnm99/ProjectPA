@@ -84,10 +84,16 @@ fun serialization(element: Element, header: String) : String {
             return true
         }
         override fun endvisit(entity: Entity) {
-            adder += tab(entity.depth) + "<"+ entity.name + "/>"
+            if (entity.parent == null) {
+                adder += "\n" + tab(entity.depth) + "<" + entity.name + "/>"
+            }else{
+                adder +=  tab(entity.depth) + "<" + entity.name + "/>"
+            }
         }
     }
     element.accept(text)
     return text.adder
 }
+
+fun findEntity(){}
 
