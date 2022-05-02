@@ -28,9 +28,14 @@ fun main(){
     xmlobject4.attributes.add("ID8")
 */
 
-    var file : String = serialization(xmlobject, header)
-   // var file2 : String = serialization(xmlobject4,file)
-    println(file)
+    var entitysearched = findEntity(xmlobject,"Children2")
+    if (entitysearched != null) {
+        println(entitysearched.name)
+    }
+
+    //var file : String = serialization(xmlobject, header)
+    //var file2 : String = serialization(xmlobject4,file)
+    //println(file)
 }
 
 fun serializationheader(p: Element) : String {
@@ -95,5 +100,15 @@ fun serialization(element: Element, header: String) : String {
     return text.adder
 }
 
-fun findEntity(){}
+fun findEntity(e: Entity, name: String): Entity? {
+    if(e.name == name)
+        return e
+    e.children.filterIsInstance<Entity>().forEach(){
+        val c = findEntity(it,name)
+        if (c != null)
+            return c
+    }
+    return  null
+}
+
 

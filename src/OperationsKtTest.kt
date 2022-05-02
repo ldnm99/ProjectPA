@@ -44,5 +44,30 @@ internal class OperationsKtTest {
 
     @org.junit.jupiter.api.Test
     fun findEntity() {
+        val xmlheader = Prolog("UTF-8","1.0")
+        val header: String = serializationheader(xmlheader)
+
+        val xmlobject = Entity(null)
+        xmlobject.name = "Parent"
+        xmlobject.attributes.add("ID")
+        xmlobject.attributes.add("ID2")
+
+        val xmlobject2 = Entity(xmlobject)
+        xmlobject2.name = "Children1"
+        xmlobject2.value = "Random long text2"
+        xmlobject2.attributes.add("ID3")
+        xmlobject2.attributes.add("ID4")
+
+        val xmlobject3 = Entity(xmlobject)
+        xmlobject3.name = "Children2"
+        xmlobject3.value = "Random long text3"
+        xmlobject3.attributes.add("ID5")
+        xmlobject3.attributes.add("ID6")
+
+        var entitysearched = findEntity(xmlobject,"Children2")
+        if (entitysearched != null) {
+            assertEquals("Children2",entitysearched.name)
+        }else
+            println("Entity with the given name was not found.")
     }
 }

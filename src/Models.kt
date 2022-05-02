@@ -31,10 +31,10 @@ class Entity(parent: Entity? = null) : Element(parent){
     var children   = mutableListOf<Element>()
     var attributes = mutableListOf<String>()
 
-
     override fun accept(visitor: Visitor) {
         if(visitor.visit(this)) { children.forEach { it.accept(visitor) } }
         visitor.endvisit(this)
     }
+
 }
 
