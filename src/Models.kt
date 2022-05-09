@@ -22,7 +22,7 @@ class Prolog(var encoding: String, var version: String) : Element(){
     }
 }
 
-class Entity(var name: String, parent: Entity? = null) : Element(parent){
+class Entity(var name: String?, parent: Entity? = null) : Element(parent){
     var value  :String ?= null
     var children   = mutableListOf<Element>()
     var attribute  = mutableListOf<Attribute>()

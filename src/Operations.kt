@@ -1,3 +1,9 @@
+import kotlin.reflect.KClass
+import kotlin.reflect.KClassifier
+import kotlin.reflect.full.declaredMemberProperties
+import kotlin.reflect.full.findAnnotation
+import kotlin.reflect.full.hasAnnotation
+
 fun main(){
 
     val xmlheader = Prolog("UTF-8","1.0")
@@ -24,13 +30,12 @@ fun main(){
     var text : String = serialization(xmlobject, header)
     println(text)
 
-/*
-    var entityfiltered= filterEntity(xmlobject, "Attribute2")
-    println(serialization(entityfiltered,header))
 
-    var entitysearched = findEntity(xmlobject,"Children1")
-    println(entitysearched.name)
-**/
+    var entitysearched = find(xmlobject,test2("Chapter1"))
+    if (entitysearched != null) {
+        println("Search result is the entity named: " + entitysearched.name)
+    }
+
 }
 
 fun serializationheader(p: Element) : String {
@@ -84,28 +89,70 @@ fun serialization(element: Element, header: String) : String {
     return text.adder
 }
 
-fun findEntity(entity: Element, name: String): Entity? {
+//children number
+fun test1(n: Int)      = {e:Entity -> e.children.size == n}
+//entity name
+fun test2(s: String)   = {e:Entity -> e.name == s}
+//attribute number
+fun test3(n: Int)      = {e:Entity -> e.attribute.size == n}
+
+fun find(root:Entity, accept: (Entity) -> Boolean): Entity? {
     val en = object : Visitor {
-        var result = Entity("null", null)
-        var o = entity
+        var result: Entity? = null
         override fun visit(e: Entity): Boolean {
-            if (e.name == name) {
+            if (accept(e)) {
                 result = e
             }
-            if (e.children.isNotEmpty() && e.name != name) {
-                for (c in e.children)
-                    findEntity(c, name)
+            e.children.forEach {
+                if (accept(it as Entity)) {
+                    result = it
+                }
             }
             return true
         }
     }
-    entity.accept(en)
-    return if (en.result.name.equals("null")){
+    root.accept(en)
+    return if (en.result == null ){
         println("No entity found!")
         null
     }else
         en.result
 }
+
+
+fun getXML(a: Any){
+
+    return if(a is MutableList<*>){
+        val children = mutableListOf<Element>()
+        a.forEach { it ->
+            children.add((getXML(it!!) as Element))
+        }
+
+
+    }else{
+        if (a::class.isData){
+            val clazz: KClass<Any> = a::class as KClass<Any>
+            val xml = Entity("")
+            clazz.declaredMemberProperties.forEach {
+                if (it.hasAnnotation<XmlTagContent>()){
+                    xml.value = it.findAnnotation<XmlTagContent>()?.toString()
+                }else{
+                    if(it.hasAnnotation<XmlName>()){
+                        xml.name =  it.name
+                    }
+                }
+            }
+
+
+
+        }else{
+            throw IllegalArgumentException("Not Supported")
+        }
+    }
+}
+
+
+
 
 
 /*
