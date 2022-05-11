@@ -1,4 +1,3 @@
-import org.junit.jupiter.api.Assertions.*
 import kotlin.test.assertEquals
 
 internal class OperationsKtTest {
@@ -48,31 +47,63 @@ internal class OperationsKtTest {
                 "<Bookstore/>" +"\n"
         assertEquals(expected, text)
     }
-/*
+
     @org.junit.jupiter.api.Test
-    fun findEntity() {
+    fun find() {
         val xmlheader = Prolog("UTF-8","1.0")
         val header: String = serializationheader(xmlheader)
 
-        val xmlobject = Entity(null)
-        xmlobject.name = "Parent"
-        xmlobject.attributes.add("ID")
-        xmlobject.attributes.add("ID2")
+        val xmlobject = Entity("Bookstore",null)
+        xmlobject.attribute.add( Attribute("Owner","Lourenco"))
+        xmlobject.attribute.add( Attribute("Category","Good Books"))
 
-        val xmlobject2 = Entity(xmlobject)
-        xmlobject2.name = "Children1"
-        xmlobject2.value = "Random long text2"
-        xmlobject2.attributes.add("ID3")
-        xmlobject2.attributes.add("ID4")
+        val children1 = Entity("1984",xmlobject)
+        children1.value = "Random text"
+        children1.attribute.add(Attribute("ID","Book1"))
 
-        val xmlobject3 = Entity(xmlobject)
-        xmlobject3.name = "Children2"
-        xmlobject3.value = "Random long text3"
-        xmlobject3.attributes.add("ID5")
-        xmlobject3.attributes.add("ID6")
+        val children2 = Entity("Odyssey", xmlobject)
+        children2.attribute.add(Attribute("ID","Book2"))
 
-        var entitysearched = findEntity(xmlobject,"Children1")
+        val children3 = Entity("Chapter1",children2)
+        children3.value = "Random long text"
+        children3.attribute.add(Attribute("Name","Intro"))
 
-        assertEquals("Children1",entitysearched.name)
-    }*/
+        val children4 = Entity("Chapter2", children2)
+        children4.value = "Random long text"
+
+        var entitysearched = find(xmlobject,entityName("Chapter1"))
+
+        if (entitysearched != null) {
+            assertEquals("Chapter1",entitysearched.name)
+        }
+    }
+
+    @org.junit.jupiter.api.Test
+    fun createXML(){
+        val xmlheader = Prolog("UTF-8","1.0")
+
+        var c1:    Chapter = Chapter(1, "Texto do capitulo 1")
+        var c2:    Chapter = Chapter(1, "Texto do capitulo 2")
+        var mobyDick: Book = Book(   1, "Moby Dick", false, Categories.Fiction, listOf(c1, c2))
+
+        var xml = createXML(mobyDick, "1.0", "UTF-8")
+        var text = serialization(xml.root, serializationheader(xmlheader))
+
+        val expected = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+                "<Book ID=\"1\", Book Name=\"Moby Dick\", read=\"false\", category=\"Fiction\">\n" +
+                "\t<chapters>\n" +
+                "\t\t<Chapter ID=\"1\">\n" +
+                "\t\t\t<Text>\n" +
+                "\t\t\t\tTexto do capitulo 1\n" +
+                "\t\t\t<Text/>\n" +
+                "\t\t<Chapter/>\n" +
+                "\t\t<Chapter ID=\"1\">\n" +
+                "\t\t\t<Text>\n" +
+                "\t\t\t\tTexto do capitulo 2\n" +
+                "\t\t\t<Text/>\n" +
+                "\t\t<Chapter/>\n" +
+                "\t<chapters/>\n" +
+                "<Book/>"+"\n"
+        assertEquals(expected, text)
+    }
 }

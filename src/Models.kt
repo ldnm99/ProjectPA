@@ -1,3 +1,5 @@
+
+
 interface Visitor {
     fun visit(p: Prolog) {}
     fun visit(a: Attribute){}
@@ -31,6 +33,50 @@ class Entity(var name: String?, parent: Entity? = null) : Element(parent){
         return attribute.joinToString(",")
     }
 
+    fun setText(text: String){
+        if (children.isEmpty()) {
+            value = text
+            specialChar()
+        }else{
+            foo()
+        }
+    }
+
+    private fun specialChar() {
+        if(value!!.contains("&"))
+            value  =  value!!.replace("&","&amp")
+        if(value!!.contains("\""))
+            value  =  value!!.replace("\"","&quot")
+        if(value!!.contains("\'"))
+            value  =  value!!.replace("\'","&apos")
+        if(value!!.contains("<"))
+            value  =  value!!.replace("<","&lt")
+        if(value!!.contains(">"))
+            value  =  value!!.replace(">","&gt")
+    }
+
+    //returns attribute with specific name
+    fun getAttribute(value: String): Attribute? {
+        var att: Attribute? = null
+        attribute.forEach{
+            if (it.name.equals(value))
+                att = it
+        }
+        return att
+    }
+
+    fun getAttribute2(value:Attribute): Attribute{
+        var att = Attribute("","")
+        attribute.forEach{
+            if(it == value)
+                att = it
+        }
+        return att
+    }
+
+
+
+
     override fun accept(visitor: Visitor) {
         if(visitor.visit(this)) {
             children.forEach {
@@ -44,8 +90,7 @@ class Entity(var name: String?, parent: Entity? = null) : Element(parent){
     }
 }
 
-
-class Attribute(var name: String, var value: String) : Element(){
+class Attribute(var name: String, var value: String, parent: Entity? = null) : Element(){
 
     override fun toString(): String {
         return " $name=\"$value\""
@@ -54,5 +99,17 @@ class Attribute(var name: String, var value: String) : Element(){
     override fun accept(visitor: Visitor) {
         visitor.visit(this)
     }
+}
+
+class XML(var header:Prolog?= null, var root:Entity){
+
+    fun getXML(): XML{
+        return this
+    }
+}
+
+@Throws(UnsupportedOperationException::class)
+fun foo() {
+    throw UnsupportedOperationException("An entity can only have text or children entities.Not both")
 }
 

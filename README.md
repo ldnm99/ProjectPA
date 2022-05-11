@@ -1,10 +1,12 @@
 # Project PA
 
- ISCTE-IUL Master in Computer Engineering curricular unit of the 2º semester with 4 phases
-# **Data Structure**
+ ISCTE-IUL Master in Computer Engineering curricular unit of the 2º semester with 4 phases.
 
+- Phase 1 - Data Structure and Simple Operations
+- Phase 2 - Reflection
+- Phase 3 - XML Editor
+- Phase 4 - XML Editor with Plugins
 
-***
 # **How to use:**
 Para criar um ficheiro XML pode começar por definir a versão e a codificação do seu  ficheiro instanciando a classe "Prolog" sendo a mesma optativa.
 
@@ -16,46 +18,99 @@ Para relacionar herarquicamente as diversas "Entity" necessita de definir o seu 
 Para efeitos de simplificação, uma "Entity" apenas pode conter ou texto ou um conjunto de outras "Entity".
 Uma  "Entity" pode ter ou não atributos.
 
+A classe Entity contem uma lista da classe Entity, uma lista da classe Attribute e vários atributos do tipo String.
+A classe Attribute contem um nome e um valor ambos String.
 ***
-# **Examples:**
+# **Objects Definition Example:**
 
 * ### Create XML with different "Entity" and a "Prolog":  
 
 ```
-    val p = Prolog("UTF-8","1.0")
+    val xmlheader = Prolog("UTF-8","1.0")
 
-    val xmlobject = Entity(null)
-    xmlobject.name = "Root"
-    xmlobject.attributes.add("Something")
+    val xmlobject = Entity("Bookstore",null)
+    xmlobject.attribute.add( Attribute("Owner","Lourenco"))
+    xmlobject.attribute.add( Attribute("Category","Good Books"))
 
-    val children1 = Entity(xmlobject)
-    children1.name = "Children1"
-    children1.value = "Random long text"
-    children1.attributes.add("Attribute1")
+    val children1 = Entity("1984",xmlobject)
+    children1.setText("Random text")
+    children1.attribute.add(Attribute("ID","Book1"))
 
-    val children2 = Entity(xmlobject)
-    children2.name = "Children2"
-    children2.attributes.add("Attribute2")
+    val children2 = Entity("Odyssey", xmlobject)
+    children2.attribute.add(Attribute("ID","Book2"))
 
-    val children3 = Entity(children2)
-    children3.name = "Children3"
-    children3.value = "Random long text"
-    children3.attributes.add("Attribute3")
+    val children3 = Entity("Chapter1",children2)
+    children3.setText("Random long text")
+    children3.attribute.add(Attribute("Name","Intro"))
 
-    val children4 = Entity(children2)
-    children4.name = "Children4"
-    children4.value = "Random long text"
+    val children4 = Entity("Chapter2", children2)
+    children4.setText("Random long text")
 ```
 
+# **Simple Operations:**
 
-
-* ### Serialize a XML to textual:
+* ### Serialize a XML document to a textual String:
 ```
 val header: String = serializationheader(p)
 var text : String = serialization(xmlobject, header)
 ```
 
-* ### Find a "Entity" with a specific name:
+* ### Find an "Entity" with a specific attribute number:
 ```
-var entitysearched = findEntity(xmlobject,"Children1")
+var result = find(xmlobject,nAttribute(2))
 ```
+
+* ### Find an "Entity" with a specific number of children :
+```
+var result = find(xmlobject,nChild(2))
+```
+
+
+* ### Find an "Entity" with a specific name:
+```
+var result = find(xmlobject,entityName("Chapter1"))
+```
+
+***
+# **Reflection Usage:**
+
+
+* ### Define a data class with annotations :
+```
+data class Book(
+    @XmlName("ID")
+    val id:  Int?,
+    @XmlName("Book Name")
+    val name: String?,
+    val read: Boolean?,
+    val category: Enum<Categories>?,
+    @XmlTagContent
+    val chapters: List<Chapter>?,
+)
+
+data class Chapter(
+    @XmlName("ID")
+    val id:  Int?,
+    @XmlTagContent
+    val Text: String
+)
+```
+* ### Call the createXML function with optional fields for Prolog class creation:
+```
+var c1:    Chapter = Chapter(1, "Texto do capitulo 1")
+var c2:    Chapter = Chapter(1, "Texto do capitulo 2")
+var mobyDick: Book = Book(   1, "Moby Dick", false, Categories.Fiction, listOf(c1, c2))
+
+var xml = createXML(mobyDick, "1.0", "UTF-8")
+```
+
+***
+# **XML Editor:**
+
+
+
+
+
+
+
+

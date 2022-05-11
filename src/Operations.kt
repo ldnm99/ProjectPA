@@ -1,10 +1,6 @@
-import kotlin.reflect.KClass
-import kotlin.reflect.KClassifier
-import kotlin.reflect.full.declaredMemberProperties
-import kotlin.reflect.full.findAnnotation
-import kotlin.reflect.full.hasAnnotation
-
 fun main(){
+
+    val mode  = 3
 
     val xmlheader = Prolog("UTF-8","1.0")
     val header: String = serializationheader(xmlheader)
@@ -14,28 +10,52 @@ fun main(){
     xmlobject.attribute.add( Attribute("Category","Good Books"))
 
     val children1 = Entity("1984",xmlobject)
-    children1.value = "Random text"
+    children1.setText("Random text")
     children1.attribute.add(Attribute("ID","Book1"))
 
     val children2 = Entity("Odyssey", xmlobject)
     children2.attribute.add(Attribute("ID","Book2"))
 
     val children3 = Entity("Chapter1",children2)
-    children3.value = "Random long text"
+    children3.setText("Random long text")
     children3.attribute.add(Attribute("Name","Intro"))
 
     val children4 = Entity("Chapter2", children2)
-    children4.value = "Random long text"
+    children4.setText("Random long text")
+/*
+    val children5 = Entity("Chapter1",children1)
+    children5.setText("Random long text")
+    children5.attribute.add(Attribute("Name","Intro"))
 
-    var text : String = serialization(xmlobject, header)
-    println(text)
+    val children6 = Entity("Chapter1",children1)
+    children6.setText("Random long text")
+    children6.attribute.add(Attribute("Name","Intro"))
+*/
 
 
-    var entitysearched = find(xmlobject,test2("Chapter1"))
-    if (entitysearched != null) {
-        println("Search result is the entity named: " + entitysearched.name)
+    if (mode == 0){
+        var text : String = serialization(xmlobject, header)
+        println(text)
+    }else if (mode == 1){
+        var entitysearched = find(xmlobject,entityName("Chapter1"))
+        if (entitysearched != null) {
+            println("Search result is the entity named: " + entitysearched.name)
+        }
+    }else if (mode == 2) {
+        var entitysearched = filterEntity(xmlobject, nChild(2))
+        if (entitysearched != null) {
+            println( serialization(entitysearched, header))
+        }
+    }else if (mode == 3) {
+        var c1:    Chapter = Chapter(1, "Texto do capitulo 1")
+        var c2:    Chapter = Chapter(1, "Texto do capitulo 2")
+        var mobyDick: Book = Book(   1, "Moby Dick", false, Categories.Fiction, listOf(c1, c2))
+
+        var xml = createXML(mobyDick, "1.0", "UTF-8")
+
+        var text = serialization(xml.root, serializationheader(xmlheader))
+        println(text)
     }
-
 }
 
 fun serializationheader(p: Element) : String {
@@ -90,11 +110,11 @@ fun serialization(element: Element, header: String) : String {
 }
 
 //children number
-fun test1(n: Int)      = {e:Entity -> e.children.size == n}
+fun nChild(n: Int)      = {e:Entity -> e.children.size == n}
 //entity name
-fun test2(s: String)   = {e:Entity -> e.name == s}
+fun entityName(s: String)   = {e:Entity -> e.name == s}
 //attribute number
-fun test3(n: Int)      = {e:Entity -> e.attribute.size == n}
+fun nAttribute(n: Int)      = {e:Entity -> e.attribute.size == n}
 
 fun find(root:Entity, accept: (Entity) -> Boolean): Entity? {
     val en = object : Visitor {
@@ -119,63 +139,25 @@ fun find(root:Entity, accept: (Entity) -> Boolean): Entity? {
         en.result
 }
 
-
-fun getXML(a: Any){
-
-    return if(a is MutableList<*>){
-        val children = mutableListOf<Element>()
-        a.forEach { it ->
-            children.add((getXML(it!!) as Element))
-        }
-
-
-    }else{
-        if (a::class.isData){
-            val clazz: KClass<Any> = a::class as KClass<Any>
-            val xml = Entity("")
-            clazz.declaredMemberProperties.forEach {
-                if (it.hasAnnotation<XmlTagContent>()){
-                    xml.value = it.findAnnotation<XmlTagContent>()?.toString()
-                }else{
-                    if(it.hasAnnotation<XmlName>()){
-                        xml.name =  it.name
-                    }
-                }
-            }
-
-
-
-        }else{
-            throw IllegalArgumentException("Not Supported")
-        }
-    }
-}
-
-
-
-
-
-/*
-//filter according to the attribute with the same name???
-fun filterEntity(entity: Element, name: String): Entity {
+//not remove from existing file but create new one
+fun filterEntity(root: Element, accept: (Entity) -> Boolean): Entity {
     val en = object : Visitor {
-        var result = Entity()
-        var o = entity
+        var result = root as Entity
         override fun visit(e: Entity): Boolean {
-            if (e.attribute!!.name.equals(name))
-                result = e
-
-            if(e.children.isNotEmpty() && e.name!=name){
-                for (c in e.children)
-                    filterEntity(c,name)
+            if (accept(e)) {
+                result.children.remove(e)
+            }
+            e.children.forEach {
+                if (accept(it as Entity)) {
+                    result = it
+                }
             }
             return true
         }
     }
-    entity.accept(en)
+    root.accept(en)
     return en.result
-}*/
-
+}
 
 
 
