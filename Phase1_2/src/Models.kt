@@ -15,7 +15,7 @@ abstract class Element( val parent: Entity? = null) {
             if (parent == null) 0
             else 1 + parent.depth
 
-    abstract fun accept(visitor:Visitor)
+    abstract fun accept(visitor: Visitor)
 }
 
 class Prolog(var encoding: String, var version: String) : Element(){
@@ -65,8 +65,8 @@ class Entity(var name: String?, parent: Entity? = null) : Element(parent){
         return att
     }
 
-    fun getAttribute2(value:Attribute): Attribute{
-        var att = Attribute("","")
+    fun getAttribute2(value: Attribute): Attribute {
+        var att = Attribute("", "")
         attribute.forEach{
             if(it == value)
                 att = it
@@ -101,9 +101,9 @@ class Attribute(var name: String, var value: String, parent: Entity? = null) : E
     }
 }
 
-class XML(var header:Prolog?= null, var root:Entity){
+class XML(var header: Prolog?= null, var root: Entity){
 
-    fun getXML(): XML{
+    fun getXML(): XML {
         return this
     }
 }

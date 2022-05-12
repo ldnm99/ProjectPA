@@ -1,24 +1,24 @@
 fun main(){
 
-    val mode  = 3
+    val mode  = 0
 
-    val xmlheader = Prolog("UTF-8","1.0")
+    val xmlheader = Prolog("UTF-8", "1.0")
     val header: String = serializationheader(xmlheader)
 
-    val xmlobject = Entity("Bookstore",null)
-    xmlobject.attribute.add( Attribute("Owner","Lourenco"))
-    xmlobject.attribute.add( Attribute("Category","Good Books"))
+    val xmlobject = Entity("Bookstore", null)
+    xmlobject.attribute.add(Attribute("Owner", "Lourenco"))
+    xmlobject.attribute.add(Attribute("Category", "Good Books"))
 
-    val children1 = Entity("1984",xmlobject)
+    val children1 = Entity("1984", xmlobject)
     children1.setText("Random text")
-    children1.attribute.add(Attribute("ID","Book1"))
+    children1.attribute.add(Attribute("ID", "Book1"))
 
     val children2 = Entity("Odyssey", xmlobject)
-    children2.attribute.add(Attribute("ID","Book2"))
+    children2.attribute.add(Attribute("ID", "Book2"))
 
-    val children3 = Entity("Chapter1",children2)
+    val children3 = Entity("Chapter1", children2)
     children3.setText("Random long text")
-    children3.attribute.add(Attribute("Name","Intro"))
+    children3.attribute.add(Attribute("Name", "Intro"))
 
     val children4 = Entity("Chapter2", children2)
     children4.setText("Random long text")
@@ -37,19 +37,19 @@ fun main(){
         var text : String = serialization(xmlobject, header)
         println(text)
     }else if (mode == 1){
-        var entitysearched = find(xmlobject,entityName("Chapter1"))
+        var entitysearched = find(xmlobject, entityName("Chapter1"))
         if (entitysearched != null) {
             println("Search result is the entity named: " + entitysearched.name)
         }
     }else if (mode == 2) {
         var entitysearched = filterEntity(xmlobject, nChild(2))
         if (entitysearched != null) {
-            println( serialization(entitysearched, header))
+            println(serialization(entitysearched, header))
         }
     }else if (mode == 3) {
-        var c1:    Chapter = Chapter(1, "Texto do capitulo 1")
-        var c2:    Chapter = Chapter(1, "Texto do capitulo 2")
-        var mobyDick: Book = Book(   1, "Moby Dick", false, Categories.Fiction, listOf(c1, c2))
+        var c1: Chapter = Chapter(1, "Texto do capitulo 1")
+        var c2: Chapter = Chapter(1, "Texto do capitulo 2")
+        var mobyDick: Book = Book(1, "Moby Dick", false, Categories.Fiction, listOf(c1, c2))
 
         var xml = createXML(mobyDick, "1.0", "UTF-8")
 
@@ -86,11 +86,12 @@ fun serialization(element: Element, header: String) : String {
             adder += tab(entity.depth) + "<" + entity.name + entity.parseAttribute() + ">"+ "\n"
         else
             adder += tab(entity.depth) + "<" + entity.name + ">"+ "\n"
+
         if(entity.value != null) {
             adder += tab(entity.depth + 1) + entity.value + "\n"
         }else{
             for (c in entity.children)
-                serialization(c,adder)
+                serialization(c, adder)
         }
         return adder
     }
@@ -110,13 +111,13 @@ fun serialization(element: Element, header: String) : String {
 }
 
 //children number
-fun nChild(n: Int)      = {e:Entity -> e.children.size == n}
+fun nChild(n: Int)      = {e: Entity -> e.children.size == n}
 //entity name
-fun entityName(s: String)   = {e:Entity -> e.name == s}
+fun entityName(s: String)   = {e: Entity -> e.name == s}
 //attribute number
-fun nAttribute(n: Int)      = {e:Entity -> e.attribute.size == n}
+fun nAttribute(n: Int)      = {e: Entity -> e.attribute.size == n}
 
-fun find(root:Entity, accept: (Entity) -> Boolean): Entity? {
+fun find(root: Entity, accept: (Entity) -> Boolean): Entity? {
     val en = object : Visitor {
         var result: Entity? = null
         override fun visit(e: Entity): Boolean {

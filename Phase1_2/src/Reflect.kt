@@ -69,7 +69,7 @@ private fun mapObject(a: Any?):String{
     else "Not Defined"
 }
 
-private fun createTree(c:Any, parent: Entity?= null): Entity{
+private fun createTree(c:Any, parent: Entity?= null): Entity {
     fun aux(c:Any, parent: Entity){
         var proper = proper(c::class)
         proper.forEach {
@@ -84,8 +84,12 @@ private fun createTree(c:Any, parent: Entity?= null): Entity{
     }
     var root: Entity
     var name = getClassName(c::class)
-    root = if(parent == null) { Entity(name = name!!) }
-    else{ Entity(name = name!!, parent) }
+    root = if(parent == null) {
+        Entity(name = name!!)
+    }
+    else{
+        Entity(name = name!!, parent)
+    }
     aux(c,root)
     return root
 }
@@ -95,11 +99,11 @@ private fun createTree(c:Any, parent: Entity?= null): Entity{
 private fun createElement(parent: Entity, p: KProperty<*>, a: Any?, identifier: Int){
     if(a !is Collection<*> ) {
         if(identifier == 0){
-            var e = Entity( name = getPropName(p), parent = parent)
+            var e = Entity(name = getPropName(p), parent = parent)
             e.value = mapObject(a)
         }else if(identifier == 1){
             if(a !is Collection<*> || !a.first()!!::class.isData){
-                var att = Attribute(  name = getPropName(p), value =  mapObject(a), parent = parent)
+                var att = Attribute(name = getPropName(p), value = mapObject(a), parent = parent)
                 parent.attribute.add(att)
             }
         }
