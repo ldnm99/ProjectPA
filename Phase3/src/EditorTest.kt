@@ -42,6 +42,11 @@ interface Command {
     fun undo()
 }
 
+interface EditorEvent {
+    fun entModified(old: Entity, new: Entity) {}
+    fun entDeleted(entity: Entity) {}
+}
+
 enum class EventType {
     ADD, REMOVE, RENAME
 }
@@ -67,6 +72,7 @@ class XMLEditor2(var xml: XML?= null): JFrame("XMLEditor") {
             root = xml!!.root
             header = xml!!.header
         }
+
         container.layout = BoxLayout(container,BoxLayout.Y_AXIS)
 
         save.addActionListener {
@@ -94,7 +100,7 @@ class XMLEditor2(var xml: XML?= null): JFrame("XMLEditor") {
         isVisible = true
     }
 
-    class ComponentSkeleton(var e: Entity) : JPanel() {
+    class ComponentSkeleton(var e: Entity) : JPanel(), IObservable<EditorEvent> {
 
         var attributes = JPanel()
         val undoStack = UndoStack()
@@ -128,7 +134,7 @@ class XMLEditor2(var xml: XML?= null): JFrame("XMLEditor") {
                 aux.add(textfield)
                 var attribute = it
                 textfield.addActionListener{
-                    attribute.value  = textfield.text
+                    execute(EditAttribute(attribute,attribute.value,textfield.text))
                 }
                 attributes.add(aux)
             }
@@ -149,7 +155,7 @@ class XMLEditor2(var xml: XML?= null): JFrame("XMLEditor") {
             val a = JMenuItem("Rename Entity")
             a.addActionListener {
                 val text = JOptionPane.showInputDialog("Rename to")
-                this.e.name = text
+                execute(RenameEntity(this.e,this.e.name,text))
                 revalidate()
                 repaint()
             }
@@ -212,18 +218,27 @@ class XMLEditor2(var xml: XML?= null): JFrame("XMLEditor") {
                 undoStack.undo()
             }
 
-            addMouseListener(object : MouseAdapter() {
+            addMouseListener(object : java.awt.event.MouseAdapter() {
                 override fun mouseClicked(e: MouseEvent) {
                     if (SwingUtilities.isRightMouseButton(e))
                         popupmenu.show(this@ComponentSkeleton, e.x, e.y)
                 }
             })
         }
+
+        override val observers: MutableList<EditorEvent>  = mutableListOf()
     }
 }
 
+class RenameEntity(val entity: Entity, val oldValue:String, val newValue:String): Command {
+    override fun run() {
+        entity.rename(newValue,oldValue)
+    }
 
-
+    override fun undo() {
+        entity.rename(oldValue,newValue)
+    }
+}
 
 class AddEntity(val parent: Entity, val name:String): Command {
 
@@ -246,47 +261,34 @@ class RemoveEntity(val parent: Entity, val name:String): Command {
     }
 }
 
-class AddAttribute(): Command {
+class AddAttribute(val attribute: Attribute, val entity: Entity): Command {
     override fun run() {
-        TODO("Not yet implemented")
+        entity.addAtt(attribute)
     }
 
     override fun undo() {
-        TODO("Not yet implemented")
+        entity.removeAtt(attribute)
     }
 }
 
-class RemoveAttribute(): Command {
+class RemoveAttribute(val attribute: Attribute, val entity: Entity): Command {
     override fun run() {
-        TODO("Not yet implemented")
+        entity.removeAtt(attribute)    }
+
+    override fun undo() {
+        entity.addAtt(attribute)
+    }
+}
+
+class EditAttribute(val attribute: Attribute, val oldValue:String, val newValue:String): Command {
+    override fun run() {
+        attribute.replaceValue(oldValue, newValue)
     }
 
     override fun undo() {
-        TODO("Not yet implemented")
+        attribute.replaceValue(newValue, oldValue)
     }
 }
-
-class RenameEntity(): Command {
-    override fun run() {
-        TODO("Not yet implemented")
-    }
-
-    override fun undo() {
-        TODO("Not yet implemented")
-    }
-}
-
-class EditAttribute(): Command {
-    override fun run() {
-        TODO("Not yet implemented")
-    }
-
-    override fun undo() {
-        TODO("Not yet implemented")
-    }
-}
-
-
 
 fun main() {
     val xmlheader = Prolog("UTF-8", "1.0")

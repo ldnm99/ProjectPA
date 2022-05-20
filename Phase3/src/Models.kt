@@ -31,7 +31,7 @@ class Entity(var name: String, parent: Entity? = null) : Element(parent){
     var attribute  = mutableListOf<Attribute>()
 
     fun parseAttribute(): String{
-        return attribute.joinToString(",")
+        return attribute.joinToString(" ")
     }
 
     fun setText(text: String){
@@ -64,10 +64,35 @@ class Entity(var name: String, parent: Entity? = null) : Element(parent){
         }
     }
 
-    fun addAtt(){
-
+    fun rename(newName:String, oldName:String){
+        if(oldName != newName){
+            this.name=newName
+            notifyObservers {
+                it(EventType.RENAME, newName,oldName)
+            }
+        }
     }
 
+    fun addAtt(a: Attribute){
+        if(attribute.add(a)){
+            notifyObservers {
+                it(EventType.ADD,"a",null)
+            }
+        }
+    }
+
+    fun removeAtt(a: Attribute){
+        run breaker@{
+            attribute.forEach {
+                it as Attribute
+                if (it == a) return@breaker
+                attribute.remove(it)
+            }
+        }
+        notifyObservers {
+            it(EventType.REMOVE, a.name, null)
+        }
+    }
 
     private fun specialChar() {
         if(value!!.contains("&"))
@@ -125,6 +150,15 @@ class Attribute(var name: String, var value: String, parent: Entity? = null) : E
 
     override fun accept(visitor: Visitor) {
         visitor.visit(this)
+    }
+
+    fun replaceValue(oldValue:String, newValue:String ){
+        if(oldValue != newValue){
+            this.value=newValue
+            notifyObservers {
+                it(EventType.RENAME, newValue,oldValue)
+            }
+        }
     }
 
     override val observers: MutableList<(EventType, String, String?) -> Unit>

@@ -30,7 +30,7 @@ class Entity(var name: String?, parent: Entity? = null) : Element(parent){
     var attribute  = mutableListOf<Attribute>()
 
     fun parseAttribute(): String{
-        return attribute.joinToString(",")
+        return attribute.joinToString(" ")
     }
 
     fun setText(text: String){
