@@ -1,6 +1,6 @@
 fun main(){
 
-    val mode  = 0
+    val mode  = 2
 
     val xmlheader = Prolog("UTF-8", "1.0")
     val header: String = serializationheader(xmlheader)
@@ -9,8 +9,8 @@ fun main(){
     xmlobject.attribute.add(Attribute("Owner", "Lourenco"))
     xmlobject.attribute.add(Attribute("Category", "Good Books"))
 
-    val children1 = Entity("B1984", xmlobject)
-    children1.setText("Random text")
+    val children1 = Entity("1984", xmlobject)
+    //children1.setText("Random text")
     children1.attribute.add(Attribute("ID", "Book1"))
 
     val children2 = Entity("Odyssey", xmlobject)
@@ -22,15 +22,15 @@ fun main(){
 
     val children4 = Entity("Chapter2", children2)
     children4.setText("Random long text")
-/*
-    val children5 = Entity("Chapter1",children1)
+
+    val children5 = Entity("C1",children1)
     children5.setText("Random long text")
     children5.attribute.add(Attribute("Name","Intro"))
 
-    val children6 = Entity("Chapter1",children1)
-    children6.setText("Random long text")
-    children6.attribute.add(Attribute("Name","Intro"))
-*/
+  //  val children6 = Entity("C2",children1)
+   // children6.setText("Random long text")
+   // children6.attribute.add(Attribute("Name","Intro"))
+
 
 
     if (mode == 0){
@@ -42,9 +42,9 @@ fun main(){
             println("Search result is the entity named: " + entitysearched.name)
         }
     }else if (mode == 2) {
-        var entitysearched = filterEntity(xmlobject, nChild(2))
-        if (entitysearched != null) {
-            println(serialization(entitysearched, header))
+        var entitysearched2 = filterEntity(xmlobject, nChild(1))
+        if (entitysearched2 != null) {
+            println(serialization(entitysearched2, header))
         }
     }else if (mode == 3) {
         var c1: Chapter = Chapter(1, "Texto do capitulo 1")
@@ -112,11 +112,16 @@ fun serialization(element: Element, header: String) : String {
 }
 
 //children number
-fun nChild(n: Int)      = {e: Entity -> e.children.size == n}
+fun nChild(n: Int)          = {e: Entity -> e.children.size == n}
 //entity name
 fun entityName(s: String)   = {e: Entity -> e.name == s}
 //attribute number
 fun nAttribute(n: Int)      = {e: Entity -> e.attribute.size == n}
+//attribute name
+fun sAttribute(s: String)      = {e: Entity -> e.getAttributeName(s) == s}
+//attribute value
+fun vAttribute(s: String)      = {e: Entity -> e.getAttributeValue(s) == s}
+
 
 fun find(root: Entity, accept: (Entity) -> Boolean): Entity? {
     val en = object : Visitor {
@@ -143,25 +148,22 @@ fun find(root: Entity, accept: (Entity) -> Boolean): Entity? {
 
 
 
-
+//Se true passa uma enti e os seus filhos
 //TODO not remove from existing file but create new one
 fun filterEntity(root: Element, accept: (Entity) -> Boolean): Entity {
     val en = object : Visitor {
         var result = root as Entity
+        var newTree = Entity(result.name)
+
         override fun visit(e: Entity): Boolean {
-            if (accept(e)) {
-                result.children.remove(e)
-            }
-            e.children.forEach {
-                if (accept(it as Entity)) {
-                    result = it
-                }
+            if (accept(e) ) {
+                newTree.children.add(e)
             }
             return true
         }
     }
     root.accept(en)
-    return en.result
+    return en.newTree
 }
 
 

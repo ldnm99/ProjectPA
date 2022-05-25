@@ -63,6 +63,26 @@ class Entity(var name: String?, parent: Entity? = null) : Element(parent){
         return att
     }
 
+    //returns string with specific name
+    fun getAttributeName(value: String): String? {
+        var att: String? = null
+        attribute.forEach{
+            if (it.name == value)
+                att = it.name
+        }
+        return att
+    }
+
+    //returns attribute with specific name
+    fun getAttributeValue(value: String): String? {
+        var att: String? = null
+        attribute.forEach{
+            if (it.value == value)
+                att = it.value
+        }
+        return att
+    }
+
     fun getAttribute2(value: Attribute): Attribute {
         var att = Attribute("", "")
         attribute.forEach{
@@ -79,6 +99,7 @@ class Entity(var name: String?, parent: Entity? = null) : Element(parent){
     fun removeChild(e: Entity){
         children.remove(e)
     }
+
 
 
     override fun accept(visitor: Visitor) {
