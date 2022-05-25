@@ -2,62 +2,101 @@ import java.awt.*
 import java. awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.io.FileWriter
+import java.io.IOException
 import java.io.PrintWriter
+import java.nio.file.Files
+import java.nio.file.Paths
+import java.util.*
 import javax.swing.*
 import javax.swing.border.CompoundBorder
 
-class XMLEditor(var xml: XML?= null): JFrame("XMLEditor") {
+interface Command {
+    fun run()
+    fun undo()
+}
 
-    var root = Entity("", null)
-    var header : Prolog?= null
+class UndoStack {
+    val stack = Stack<Command>()
 
+    fun execute(c: Command) {
+        c.run()
+        stack.add(c)
+    }
+
+    fun undo() {
+        if (stack.isNotEmpty())
+            stack.pop().undo()
+    }
+}
+
+//Save to file and undo work
+class SaveTree(val root: Entity,var header: Prolog?= null): Command {
+    override fun run() {
+        val out =  PrintWriter(FileWriter("Test.xml"))
+        if(header != null){
+            out.write(serialization(root, serializationheader(header!!)))
+        }else
+            out.write(serialization(root, ""))
+        out.close()
+    }
+
+    override fun undo() {
+        val path = Paths.get("Test.xml")
+        try {
+            val result = Files.deleteIfExists(path)
+            if (result) {
+                println("Deletion succeeded.")
+            } else {
+                println("Deletion failed.")
+            }
+        } catch (e: IOException) {
+            println("Deletion failed.")
+            e.printStackTrace()
+        }
+    }
+
+}
+
+class XMLEditor(var xml: XML): JFrame("XMLEditor") {
+
+    val undoStack = UndoStack()
     var container = JPanel()
     var tree      = JPanel()
-    var operation = JPanel()
 
     var buttons = JMenuBar()
     var save    = JButton("Save to File")
-    var undo    = JButton("WIP undo")
+    var undo    = JButton("Undo")
 
+    fun execute(c: Command) {
+        undoStack.execute(c)
+    }
 
     init {
         defaultCloseOperation = JFrame.EXIT_ON_CLOSE
         size = Dimension(300, 300)
 
-        if (xml != null){
-            root = xml!!.root
-            header = xml!!.header
-        }
         container.layout = BoxLayout(container,BoxLayout.Y_AXIS)
 
         save.addActionListener {
-            val out =  PrintWriter(FileWriter("Test.xml"))
-            if(header != null){
-                out.write(serialization(root, serializationheader(header!!)))
-            }else
-                out.write(serialization(root, ""))
-            out.close()
+            execute(SaveTree(xml.root,xml.header))
         }
         undo.addActionListener {
-            println("WIP")
+            undoStack.undo()
         }
 
         buttons.add(save)
         buttons.add(undo)
-        operation.add(buttons)
+        container.add(buttons)
 
-        tree = ComponentSkeleton(root)
-
-        container.add(operation)
+        tree = ComponentSkeleton(xml.root)
+        container.add(tree)
         container.add(JScrollPane(tree))
-
         add(container)
     }
     fun open() {
         isVisible = true
     }
 }
-
 
 class ComponentSkeleton(var e: Entity) : JPanel() {
 
@@ -167,7 +206,7 @@ class ComponentSkeleton(var e: Entity) : JPanel() {
         }
         popupmenu.add(da)
 
-        addMouseListener(object : MouseAdapter() {
+        addMouseListener(object : java.awt.event.MouseAdapter() {
             override fun mouseClicked(e: MouseEvent) {
                 if (SwingUtilities.isRightMouseButton(e))
                     popupmenu.show(this@ComponentSkeleton, e.x, e.y)
@@ -176,8 +215,6 @@ class ComponentSkeleton(var e: Entity) : JPanel() {
     }
 }
 
-
-
 fun main() {
     val xmlheader = Prolog("UTF-8", "1.0")
 
@@ -185,7 +222,7 @@ fun main() {
     root.attribute.add(Attribute("Owner", "Lourenço"))
     root.attribute.add(Attribute("Category", "Good Books"))
 
-    val children1 = Entity("1984", root)
+    val children1 = Entity("B1984", root)
     children1.setText("Random text")
     children1.attribute.add(Attribute("ID", "Book1"))
 
@@ -204,4 +241,3 @@ fun main() {
     val w = XMLEditor(xml)
     w.open()
 }
-

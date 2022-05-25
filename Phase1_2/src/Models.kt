@@ -1,5 +1,3 @@
-
-
 interface Visitor {
     fun visit(p: Prolog) {}
     fun visit(a: Attribute){}
@@ -74,7 +72,13 @@ class Entity(var name: String?, parent: Entity? = null) : Element(parent){
         return att
     }
 
+    fun addChild(e: Entity){
+        children.add(e)
+    }
 
+    fun removeChild(e: Entity){
+        children.remove(e)
+    }
 
 
     override fun accept(visitor: Visitor) {

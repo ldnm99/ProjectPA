@@ -9,7 +9,7 @@ fun main(){
     xmlobject.attribute.add(Attribute("Owner", "Lourenco"))
     xmlobject.attribute.add(Attribute("Category", "Good Books"))
 
-    val children1 = Entity("1984", xmlobject)
+    val children1 = Entity("B1984", xmlobject)
     children1.setText("Random text")
     children1.attribute.add(Attribute("ID", "Book1"))
 
@@ -71,6 +71,7 @@ fun serializationheader(p: Element) : String {
     return text.adder
 }
 
+//TODO REMOVE NEWLINE AT END OF FILE
 fun serialization(element: Element, header: String) : String {
 
     fun tab(depth: Int): String{
@@ -140,7 +141,10 @@ fun find(root: Entity, accept: (Entity) -> Boolean): Entity? {
         en.result
 }
 
-//not remove from existing file but create new one
+
+
+
+//TODO not remove from existing file but create new one
 fun filterEntity(root: Element, accept: (Entity) -> Boolean): Entity {
     val en = object : Visitor {
         var result = root as Entity

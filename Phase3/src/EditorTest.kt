@@ -1,8 +1,10 @@
 import java.awt.*
-import java. awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.io.FileWriter
+import java.io.IOException
 import java.io.PrintWriter
+import java.nio.file.Files
+import java.nio.file.Paths
 import java.util.*
 import javax.swing.*
 import javax.swing.border.CompoundBorder
@@ -51,7 +53,9 @@ enum class EventType {
     ADD, REMOVE, RENAME
 }
 
-class XMLEditor2(var xml: XML?= null): JFrame("XMLEditor") {
+class XMLEditor2(var xml: XML): JFrame("XMLEditor") {
+
+    val undoStack = UndoStack()
 
     var root = Entity("", null)
     var header : Prolog?= null
@@ -68,20 +72,18 @@ class XMLEditor2(var xml: XML?= null): JFrame("XMLEditor") {
         defaultCloseOperation = JFrame.EXIT_ON_CLOSE
         size = Dimension(300, 300)
 
-        if (xml != null){
+
             root = xml!!.root
             header = xml!!.header
-        }
+
 
         container.layout = BoxLayout(container,BoxLayout.Y_AXIS)
 
         save.addActionListener {
-            val out =  PrintWriter(FileWriter("Test.xml"))
-            if(header != null){
-                out.write(serialization(root, serializationheader(header!!)))
-            }else
-                out.write(serialization(root, ""))
-            out.close()
+            execute(SaveTree(xml.root,xml.header))
+        }
+        undo.addActionListener {
+            undoStack.undo()
         }
 
 
@@ -99,15 +101,19 @@ class XMLEditor2(var xml: XML?= null): JFrame("XMLEditor") {
     fun open() {
         isVisible = true
     }
+    fun execute(c: Command) {
+        undoStack.execute(c)
+    }
 
     class ComponentSkeleton(var e: Entity) : JPanel(), IObservable<EditorEvent> {
-
-        var attributes = JPanel()
         val undoStack = UndoStack()
+        var attributes = JPanel()
+        override val observers: MutableList<EditorEvent>  = mutableListOf()
 
         fun execute(c: Command) {
             undoStack.execute(c)
         }
+
 
         override fun paintComponent(g: Graphics) {
             super.paintComponent(g)
@@ -137,6 +143,8 @@ class XMLEditor2(var xml: XML?= null): JFrame("XMLEditor") {
                     execute(EditAttribute(attribute,attribute.value,textfield.text))
                 }
                 attributes.add(aux)
+
+
             }
             if(e.children.isEmpty()){
                 add(JTextArea(e.value))
@@ -225,8 +233,6 @@ class XMLEditor2(var xml: XML?= null): JFrame("XMLEditor") {
                 }
             })
         }
-
-        override val observers: MutableList<EditorEvent>  = mutableListOf()
     }
 }
 
@@ -288,6 +294,34 @@ class EditAttribute(val attribute: Attribute, val oldValue:String, val newValue:
     override fun undo() {
         attribute.replaceValue(newValue, oldValue)
     }
+}
+
+//Save to file and undo work
+class SaveTree(val root: Entity,var header: Prolog?= null): Command {
+    override fun run() {
+        val out =  PrintWriter(FileWriter("Test.xml"))
+        if(header != null){
+            out.write(serialization(root, serializationheader(header!!)))
+        }else
+            out.write(serialization(root, ""))
+        out.close()
+    }
+
+    override fun undo() {
+        val path = Paths.get("Test.xml")
+        try {
+            val result = Files.deleteIfExists(path)
+            if (result) {
+                println("Deletion succeeded.")
+            } else {
+                println("Deletion failed.")
+            }
+        } catch (e: IOException) {
+            println("Deletion failed.")
+            e.printStackTrace()
+        }
+    }
+
 }
 
 fun main() {
