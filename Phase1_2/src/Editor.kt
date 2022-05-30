@@ -1,5 +1,4 @@
 import java.awt.*
-import java. awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.io.FileWriter
 import java.io.IOException
@@ -27,16 +26,17 @@ class UndoStack {
         if (stack.isNotEmpty())
             stack.pop().undo()
     }
+
+    fun redo(){
+        if (stack.isNotEmpty())
+            execute(stack.peek())
+    }
 }
 
-//Save to file and undo work
-class SaveTree(val root: Entity,var header: Prolog?= null): Command {
+class SaveTree(var xml: XML): Command {
     override fun run() {
         val out =  PrintWriter(FileWriter("Test.xml"))
-        if(header != null){
-            out.write(serialization(root, serializationheader(header!!)))
-        }else
-            out.write(serialization(root, ""))
+        out.write(serialization(xml))
         out.close()
     }
 
@@ -66,29 +66,34 @@ class XMLEditor(var xml: XML): JFrame("XMLEditor") {
     var buttons = JMenuBar()
     var save    = JButton("Save to File")
     var undo    = JButton("Undo")
+    var redo    = JButton("Redo")
 
     fun execute(c: Command) {
         undoStack.execute(c)
     }
 
     init {
-        defaultCloseOperation = JFrame.EXIT_ON_CLOSE
+        defaultCloseOperation = EXIT_ON_CLOSE
         size = Dimension(300, 300)
 
         container.layout = BoxLayout(container,BoxLayout.Y_AXIS)
 
         save.addActionListener {
-            execute(SaveTree(xml.root,xml.header))
+            execute(SaveTree(xml))
         }
         undo.addActionListener {
             undoStack.undo()
         }
+        redo.addActionListener {
+            undoStack.redo()
+        }
 
         buttons.add(save)
         buttons.add(undo)
+        buttons.add(redo)
         container.add(buttons)
 
-        tree = ComponentSkeleton(xml.root)
+        tree = ComponentSkeleton(xml.tree)
         container.add(tree)
         container.add(JScrollPane(tree))
         add(container)

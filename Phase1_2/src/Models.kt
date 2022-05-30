@@ -36,7 +36,7 @@ class Entity(var name: String?, parent: Entity? = null) : Element(parent){
             value = text
             specialChar()
         }else{
-            foo()
+            throw UnsupportedOperationException("An entity can only have text or children entities.Not both")
         }
     }
 
@@ -57,7 +57,7 @@ class Entity(var name: String?, parent: Entity? = null) : Element(parent){
     fun getAttribute(value: String): Attribute? {
         var att: Attribute? = null
         attribute.forEach{
-            if (it.name.equals(value))
+            if (it.name == value)
                 att = it
         }
         return att
@@ -92,16 +92,6 @@ class Entity(var name: String?, parent: Entity? = null) : Element(parent){
         return att
     }
 
-    fun addChild(e: Entity){
-        children.add(e)
-    }
-
-    fun removeChild(e: Entity){
-        children.remove(e)
-    }
-
-
-
     override fun accept(visitor: Visitor) {
         if(visitor.visit(this)) {
             children.forEach {
@@ -126,15 +116,11 @@ class Attribute(var name: String, var value: String, parent: Entity? = null) : E
     }
 }
 
-class XML(var header: Prolog?= null, var root: Entity){
+class XML(var header: Prolog?= null, var tree: Entity){
 
     fun getXML(): XML {
         return this
     }
 }
 
-@Throws(UnsupportedOperationException::class)
-fun foo() {
-    throw UnsupportedOperationException("An entity can only have text or children entities.Not both")
-}
 

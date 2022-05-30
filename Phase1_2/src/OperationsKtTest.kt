@@ -3,38 +3,48 @@ import kotlin.test.assertEquals
 internal class OperationsKtTest {
 
     @org.junit.jupiter.api.Test
-    fun serializationheader() {
-        val xmlheader = Prolog("UTF-8", "1.0")
-        val header: String = serializationheader(xmlheader)
-        val expected = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-        assertEquals(expected,header)
-    }
-
-    @org.junit.jupiter.api.Test
     fun serialization() {
-        val xmlobject = Entity("Bookstore", null)
-        xmlobject.attribute.add(Attribute("Owner", "Lourenco"))
-        xmlobject.attribute.add(Attribute("Category", "Good Books"))
+        val xmlHeader = Prolog("UTF-8", "1.0")
 
-        val children1 = Entity("1984", xmlobject)
-        children1.value = "Random text"
+        val xmlTree = Entity("Bookstore", null)
+        xmlTree.attribute.add(Attribute("Owner", "Lourenco"))
+        xmlTree.attribute.add(Attribute("Category", "Good Books"))
+
+        val children1 = Entity("1984", xmlTree)
+        //children1.setText("Random text")
         children1.attribute.add(Attribute("ID", "Book1"))
 
-        val children2 = Entity("Odyssey", xmlobject)
+        val children2 = Entity("Odyssey", xmlTree)
         children2.attribute.add(Attribute("ID", "Book2"))
 
         val children3 = Entity("Chapter1", children2)
-        children3.value = "Random long text"
+        children3.setText("Random long text")
         children3.attribute.add(Attribute("Name", "Intro"))
 
         val children4 = Entity("Chapter2", children2)
-        children4.value = "Random long text"
+        children4.setText("Random long text")
+
+        val children5 = Entity("C1",children1)
+        children5.setText("Random long text")
+        children5.attribute.add(Attribute("Name","Intro"))
+
+        val children6 = Entity("C2",children1)
+        children6.setText("Random long text")
+        children6.attribute.add(Attribute("Name","Intro"))
+
+        val xml = XML(xmlHeader,xmlTree)
 
 
-        var text : String = serialization(xmlobject, "")
-        val expected = "\n"+ "<Bookstore Owner=\"Lourenco\", Category=\"Good Books\">\n" +
+        val text  = serialization(xml)
+        val expected = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+                "<Bookstore Owner=\"Lourenco\"  Category=\"Good Books\">\n" +
                 "\t<1984 ID=\"Book1\">\n" +
-                "\t\tRandom text\n" +
+                "\t\t<C1 Name=\"Intro\">\n" +
+                "\t\t\tRandom long text\n" +
+                "\t\t<C1/>\n" +
+                "\t\t<C2 Name=\"Intro\">\n" +
+                "\t\t\tRandom long text\n" +
+                "\t\t<C2/>\n" +
                 "\t<1984/>\n" +
                 "\t<Odyssey ID=\"Book2\">\n" +
                 "\t\t<Chapter1 Name=\"Intro\">\n" +
@@ -44,34 +54,42 @@ internal class OperationsKtTest {
                 "\t\t\tRandom long text\n" +
                 "\t\t<Chapter2/>\n" +
                 "\t<Odyssey/>\n" +
-                "<Bookstore/>" +"\n"
+                "<Bookstore/>"
         assertEquals(expected, text)
     }
 
     @org.junit.jupiter.api.Test
     fun find() {
-        val xmlheader = Prolog("UTF-8", "1.0")
-        val header: String = serializationheader(xmlheader)
+        val xmlHeader = Prolog("UTF-8", "1.0")
 
-        val xmlobject = Entity("Bookstore", null)
-        xmlobject.attribute.add(Attribute("Owner", "Lourenco"))
-        xmlobject.attribute.add(Attribute("Category", "Good Books"))
+        val xmlTree = Entity("Bookstore", null)
+        xmlTree.attribute.add(Attribute("Owner", "Lourenco"))
+        xmlTree.attribute.add(Attribute("Category", "Good Books"))
 
-        val children1 = Entity("1984", xmlobject)
-        children1.value = "Random text"
+        val children1 = Entity("1984", xmlTree)
+        //children1.setText("Random text")
         children1.attribute.add(Attribute("ID", "Book1"))
 
-        val children2 = Entity("Odyssey", xmlobject)
+        val children2 = Entity("Odyssey", xmlTree)
         children2.attribute.add(Attribute("ID", "Book2"))
 
         val children3 = Entity("Chapter1", children2)
-        children3.value = "Random long text"
+        children3.setText("Random long text")
         children3.attribute.add(Attribute("Name", "Intro"))
 
         val children4 = Entity("Chapter2", children2)
-        children4.value = "Random long text"
+        children4.setText("Random long text")
 
-        var entitysearched = find(xmlobject, entityName("Chapter1"))
+        val children5 = Entity("C1",children1)
+        children5.setText("Random long text")
+        children5.attribute.add(Attribute("Name","Intro"))
+
+        val children6 = Entity("C2",children1)
+        children6.setText("Random long text")
+        children6.attribute.add(Attribute("Name","Intro"))
+
+        val xml = XML(xmlHeader,xmlTree)
+        val entitysearched = find(xml, entityName("Chapter1"))
 
         if (entitysearched != null) {
             assertEquals("Chapter1",entitysearched.name)
@@ -79,18 +97,63 @@ internal class OperationsKtTest {
     }
 
     @org.junit.jupiter.api.Test
-    fun createXML(){
-        val xmlheader = Prolog("UTF-8", "1.0")
+    fun filter() {
+        val xmlHeader = Prolog("UTF-8", "1.0")
 
-        var c1: Chapter = Chapter(1, "Texto do capitulo 1")
-        var c2: Chapter = Chapter(1, "Texto do capitulo 2")
-        var mobyDick: Book = Book(1, "Moby Dick", false, Categories.Fiction, listOf(c1, c2))
+        val xmlTree = Entity("Bookstore", null)
+        xmlTree.attribute.add(Attribute("Owner", "Lourenco"))
+        xmlTree.attribute.add(Attribute("Category", "Good Books"))
 
-        var xml = createXML(mobyDick, "1.0", "UTF-8")
-        var text = serialization(xml.root, serializationheader(xmlheader))
+        val children1 = Entity("1984", xmlTree)
+        //children1.setText("Random text")
+        children1.attribute.add(Attribute("ID", "Book1"))
 
+        val children2 = Entity("Odyssey", xmlTree)
+        children2.attribute.add(Attribute("ID", "Book2"))
+
+        val children3 = Entity("Chapter1", children2)
+        children3.setText("Random long text")
+        children3.attribute.add(Attribute("Name", "Intro"))
+
+        val children4 = Entity("Chapter2", children2)
+        children4.setText("Random long text")
+
+        val children5 = Entity("C1", children1)
+        children5.setText("Random long text")
+        children5.attribute.add(Attribute("Name", "Intro"))
+
+        val children6 = Entity("C2", children1)
+        children6.setText("Random long text")
+        children6.attribute.add(Attribute("Name", "Intro"))
+
+        val xml = XML(xmlHeader, xmlTree)
+        val xmlFiltered = filterEntity(xml, vAttribute("Book1"))
+        val text = serialization(xmlFiltered)
         val expected = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-                "<Book ID=\"1\", Book Name=\"Moby Dick\", read=\"false\", category=\"Fiction\">\n" +
+                "<Bookstore>\n" +
+                "\t<1984 ID=\"Book1\">\n" +
+                "\t\t<C1 Name=\"Intro\">\n" +
+                "\t\t\tRandom long text\n" +
+                "\t\t<C1/>\n" +
+                "\t\t<C2 Name=\"Intro\">\n" +
+                "\t\t\tRandom long text\n" +
+                "\t\t<C2/>\n" +
+                "\t<1984/>\n" +
+                "<Bookstore/>"
+        assertEquals(expected, text)
+    }
+
+    @org.junit.jupiter.api.Test
+    fun createXML(){
+        val c1 = Chapter(1, "Texto do capitulo 1")
+        val c2 = Chapter(1, "Texto do capitulo 2")
+        val mobyDick = Book(1, "Moby Dick", false, Categories.Fiction, listOf(c1, c2))
+
+        val xml = createXML(mobyDick, "1.0", "UTF-8")
+        val text = serialization(xml)
+
+        val expected = "<?xml version=\"UTF-8\" encoding=\"1.0\"?>\n" +
+                "<Book ID=\"1\"  Book Name=\"Moby Dick\"  read=\"false\"  category=\"Fiction\">\n" +
                 "\t<chapters>\n" +
                 "\t\t<Chapter ID=\"1\">\n" +
                 "\t\t\t<Text>\n" +
@@ -103,7 +166,7 @@ internal class OperationsKtTest {
                 "\t\t\t<Text/>\n" +
                 "\t\t<Chapter/>\n" +
                 "\t<chapters/>\n" +
-                "<Book/>"+"\n"
+                "<Book/>"
         assertEquals(expected, text)
     }
 }

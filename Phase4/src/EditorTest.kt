@@ -21,6 +21,12 @@ class UndoStack {
         if (stack.isNotEmpty())
             stack.pop().undo()
     }
+
+    fun redo(){
+        if (stack.isNotEmpty())
+            execute(stack.peek())
+    }
+
 }
 
 interface Command {
@@ -73,7 +79,6 @@ class RemoveEntity(val parent: Entity, val new: Entity): Command {
         parent.addChild(new)
     }
 }
-
 
 /*
 class RenameEntity(val entity: Entity, val oldValue:String, val newValue:String): Command {
@@ -149,6 +154,7 @@ class GUI(var xml: XML): JFrame("XMLEditor"){
     var buttons   = JMenuBar()
     var save      = JButton("Save to File")
     var undo      = JButton("Undo")
+    var redo    = JButton("Redo")
     var tree      = JPanel()
     var container = JPanel()
 
@@ -172,8 +178,12 @@ class GUI(var xml: XML): JFrame("XMLEditor"){
         undo.addActionListener {
             undoStack.undo()
         }
+        redo.addActionListener {
+            undoStack.redo()
+        }
         buttons.add(save)
         buttons.add(undo)
+        buttons.add(redo)
         container.add(buttons)
 
         tree = ComponentSkeleton(xml.root)
