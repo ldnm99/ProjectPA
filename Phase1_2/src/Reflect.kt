@@ -103,7 +103,7 @@ private fun createElement(parent: Entity, p: KProperty<*>, a: Any?, identifier: 
             e.value = mapObject(a)
         }else if(identifier == 1){
             if(a !is Collection<*> || !a.first()!!::class.isData){
-                var att = Attribute(name = getPropName(p), value = mapObject(a), parent = parent)
+                var att = Attribute(name = getPropName(p), value = mapObject(a), owner = parent)
                 parent.attribute.add(att)
             }
         }

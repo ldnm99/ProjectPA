@@ -93,7 +93,7 @@ class XMLEditor(var xml: XML): JFrame("XMLEditor") {
         buttons.add(redo)
         container.add(buttons)
 
-        tree = ComponentSkeleton(xml.tree)
+        tree = ComponentEnt(xml.tree)
         container.add(tree)
         container.add(JScrollPane(tree))
         add(container)
@@ -103,9 +103,9 @@ class XMLEditor(var xml: XML): JFrame("XMLEditor") {
     }
 }
 
-class ComponentSkeleton(var e: Entity) : JPanel() {
+class ComponentEnt(var e: Entity) : JPanel() {
 
-    var attributes = JPanel()
+    var attPanel = JPanel()
 
     override fun paintComponent(g: Graphics) {
         super.paintComponent(g)
@@ -119,28 +119,20 @@ class ComponentSkeleton(var e: Entity) : JPanel() {
             BorderFactory.createEmptyBorder(30, 10, 10, 10),
             BorderFactory.createLineBorder(Color.BLACK, 2, true)
         )
-        add(attributes)
+        add(attPanel)
         mapEntity()
         createPopupMenu()
     }
 
     private fun mapEntity(){
         e.attribute.forEach {
-            var aux = JPanel(FlowLayout())
-            aux.add(JLabel(it.name))
-            var textfield = JTextField(it.value)
-            aux.add(textfield)
-            var attribute = it
-            textfield.addActionListener{
-                attribute.value  = textfield.text
-            }
-            attributes.add(aux)
+            attPanel.add(ComponentAtt(it))
         }
         if(e.children.isEmpty()){
             add(JTextArea(e.value))
         }else{
             e.children.forEach {
-                add(ComponentSkeleton(it as Entity))
+                add(ComponentEnt(it as Entity))
             }
         }
     }
@@ -149,7 +141,6 @@ class ComponentSkeleton(var e: Entity) : JPanel() {
 
         val popupmenu = JPopupMenu("Actions")
 
-        //Rename entity works
         val a = JMenuItem("Rename Entity")
         a.addActionListener {
             val text = JOptionPane.showInputDialog("Rename to")
@@ -159,23 +150,14 @@ class ComponentSkeleton(var e: Entity) : JPanel() {
         }
         popupmenu.add(a)
 
-        //Rename attribute works only when you press enter after
         val b = JMenuItem("Add Attribute")
         b.addActionListener {
-            val text = JOptionPane.showInputDialog("Attribute Name")
-            var aux = JPanel(FlowLayout())
-            aux.add(JLabel(text))
+            val name = JOptionPane.showInputDialog("Attribute Name")
+            val value = JOptionPane.showInputDialog("Attribute Text")
 
-            val temp = Attribute(text, "", this.e)
+            val temp = Attribute(name, value, this.e)
             this.e.attribute.add(temp)
-            val aux2 = e.getAttribute2(temp)
-            val textfield = JTextField("Insert Attribute Value")
-            textfield.addActionListener{
-                aux2.value  = textfield.text
-            }
-
-            aux.add(textfield)
-            attributes.add(aux)
+            add(ComponentAtt(temp))
             revalidate()
             repaint()
         }
@@ -184,59 +166,88 @@ class ComponentSkeleton(var e: Entity) : JPanel() {
         val c = JMenuItem("Add Entity")
         c.addActionListener {
             val text = JOptionPane.showInputDialog("Entity Name")
-            add(ComponentSkeleton(Entity(text, e)))
+            add(ComponentEnt(Entity(text, e)))
             revalidate()
         }
         popupmenu.add(c)
 
-        //não faz update no gui
         val d = JMenuItem("Delete Entity")
         d.addActionListener {
             e.parent?.children?.remove(e)
-            remove(this@ComponentSkeleton)
-            revalidate()
-            repaint()
+            val aux = parent
+            aux.remove(this@ComponentEnt)
+            aux.revalidate()
+            aux.repaint()
         }
         popupmenu.add(d)
-
-        //não faz update no gui
-        val da = JMenuItem("Delete Attribute")
-        da.addActionListener {
-            val text = JOptionPane.showInputDialog("Attribute name you want to delete")
-            if( e.getAttribute(text) != null){
-                e.attribute.remove(e.getAttribute(text))
-            }
-            revalidate()
-            repaint()
-        }
-        popupmenu.add(da)
 
         addMouseListener(object : java.awt.event.MouseAdapter() {
             override fun mouseClicked(e: MouseEvent) {
                 if (SwingUtilities.isRightMouseButton(e))
-                    popupmenu.show(this@ComponentSkeleton, e.x, e.y)
+                    popupmenu.show(this@ComponentEnt, e.x, e.y)
             }
         })
     }
+}
+
+class ComponentAtt(var attribute: Attribute): JPanel(){
+
+    var name = JLabel("")
+    var value= JTextField("")
+
+    init {
+        layout = FlowLayout()
+        name.text = attribute.name
+        value.text = attribute.value
+        value.addActionListener{
+            attribute.value  = value.text
+        }
+        add(name)
+        add(value)
+        createPopupMenu()
+    }
+
+    private fun createPopupMenu() {
+
+        val popupmenu = JPopupMenu("Actions")
+
+        val delete = JMenuItem("Delete Attribute")
+        delete.addActionListener {
+            attribute.owner!!.attribute.remove(attribute)
+            val aux = parent
+            aux.remove(this)
+            aux.revalidate()
+            aux.repaint()
+        }
+        popupmenu.add(delete)
+
+        addMouseListener(object : java.awt.event.MouseAdapter() {
+            override fun mouseClicked(e: MouseEvent) {
+                if (SwingUtilities.isRightMouseButton(e))
+                    popupmenu.show(this@ComponentAtt, e.x, e.y)
+            }
+        })
+    }
+
 }
 
 fun main() {
     val xmlheader = Prolog("UTF-8", "1.0")
 
     val root = Entity("Bookstore", null)
-    root.attribute.add(Attribute("Owner", "Lourenço"))
-    root.attribute.add(Attribute("Category", "Good Books"))
+    root.attribute.add(Attribute("Owner", "Lourenço",root))
+    root.attribute.add(Attribute("Category", "Good Books",root))
 
     val children1 = Entity("B1984", root)
     children1.setText("Random text")
-    children1.attribute.add(Attribute("ID", "Book1"))
+    children1.attribute.add(Attribute("ID", "Book1",children1))
 
     val children2 = Entity("Odyssey", root)
-    children2.attribute.add(Attribute("ID", "Book2"))
+    children2.attribute.add(Attribute("ID", "Book2",children2))
 
     val children3 = Entity("Chapter1", children2)
     children3.setText("Random long text")
-    children3.attribute.add(Attribute("Name", "Intro"))
+    children3.attribute.add(Attribute("Name", "Intro",children3))
 
     val children4 = Entity("Chapter2", children2)
     children4.setText("Random long text")

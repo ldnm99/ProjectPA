@@ -136,7 +136,7 @@ class Entity(var name: String, parent: Entity? = null) : Element(parent){
 
 }
 
-class Attribute(var name: String, var value: String, parent: Entity? = null) : Element(){
+class Attribute(var name: String, var value: String, var owner: Entity? = null) : Element(){
 
     override fun toString(): String {
         return " $name=\"$value\""

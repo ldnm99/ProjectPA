@@ -186,14 +186,16 @@ class GUI(var xml: XML): JFrame("XMLEditor"){
         buttons.add(redo)
         container.add(buttons)
 
-        tree = ComponentSkeleton(xml.root)
+        tree = ComponentEnt(xml.root)
         container.add(tree)
         container.add(JScrollPane(tree))
         add(container)
     }
 
-    inner class ComponentSkeleton(var e: Entity) : JPanel(), IObservable<EditorEvent> {
-        var attributes = JPanel()
+    inner class ComponentEnt(var e: Entity) : JPanel(), IObservable<EditorEvent> {
+
+        var attPanel = JPanel()
+
         override val observers: MutableList<EditorEvent>  = mutableListOf()
 
         override fun paintComponent(g: Graphics) {
@@ -208,29 +210,20 @@ class GUI(var xml: XML): JFrame("XMLEditor"){
                 BorderFactory.createEmptyBorder(30, 10, 10, 10),
                 BorderFactory.createLineBorder(Color.BLACK, 2, true)
             )
-            add(attributes)
+            add(attPanel)
             mapEntity()
             createPopupMenu()
         }
 
         private fun mapEntity(){
             e.attribute.forEach {
-                var aux = JPanel(FlowLayout())
-                aux.add(JLabel(it.name))
-                var textfield = JTextField(it.value)
-                aux.add(textfield)
-                var attribute = it
-                textfield.addActionListener{
-                    attribute.value  = textfield.text
-                }
-                attributes.add(aux)
-
+                attPanel.add(ComponentAtt(it))
             }
             if(e.children.isEmpty()){
                 add(JTextArea(e.value))
             }else{
                 e.children.forEach {
-                    add(ComponentSkeleton(it as Entity))
+                    add(ComponentEnt(it as Entity))
                 }
             }
             e.addObserver{event, p, aux ->
@@ -262,20 +255,12 @@ class GUI(var xml: XML): JFrame("XMLEditor"){
             //Rename attribute works only when you press enter after
             val b = JMenuItem("Add Attribute")
             b.addActionListener {
-                val text = JOptionPane.showInputDialog("Attribute Name")
-                var aux = JPanel(FlowLayout())
-                aux.add(JLabel(text))
+                val name = JOptionPane.showInputDialog("Attribute Name")
+                val value = JOptionPane.showInputDialog("Attribute Text")
 
-                val temp = Attribute(text, "", this.e)
+                val temp = Attribute(name, value, this.e)
                 this.e.attribute.add(temp)
-                val aux2 = e.getAttribute2(temp)
-                val textfield = JTextField("Insert Attribute Value")
-                textfield.addActionListener{
-                    aux2.value  = textfield.text
-                }
-
-                aux.add(textfield)
-                attributes.add(aux)
+                add(ComponentAtt(temp))
                 revalidate()
                 repaint()
             }
@@ -296,38 +281,27 @@ class GUI(var xml: XML): JFrame("XMLEditor"){
                 }
             }
             popupmenu.add(d)
-/*
-            //não faz update no gui
-            val da = JMenuItem("Delete Attribute")
-            da.addActionListener {
-                val text = JOptionPane.showInputDialog("Attribute name you want to delete")
-                if( e.getAttribute(text) != null){
-                    e.attribute.remove(e.getAttribute(text))
-                }
-                revalidate()
-                repaint()
-            }
-            popupmenu.add(da)
-*/
 
             addMouseListener(object : java.awt.event.MouseAdapter() {
                 override fun mouseClicked(e: MouseEvent) {
                     if (SwingUtilities.isRightMouseButton(e))
-                        popupmenu.show(this@ComponentSkeleton, e.x, e.y)
+                        popupmenu.show(this@ComponentEnt, e.x, e.y)
                 }
             })
         }
 
         private fun addEntityGUI(e: Element){
-            add(ComponentSkeleton(e as Entity))
+            add(ComponentEnt(e as Entity))
             revalidate()
             repaint()
         }
 
         private fun removeEntityGUI(){
-            remove(this@ComponentSkeleton)
-            revalidate()
-            repaint()
+            e.parent?.children?.remove(e)
+            val aux = parent
+            aux.remove(this@ComponentEnt)
+            aux.revalidate()
+            aux.repaint()
         }
 
         private fun replaceEntityGUI(old: Element, new: Element){
@@ -339,10 +313,8 @@ class GUI(var xml: XML): JFrame("XMLEditor"){
         private fun addAttributeGUI(a:Element){
             a as Attribute
             this.e.attribute.add(a)
-            var aux = JPanel(FlowLayout())
-            aux.add(JLabel(a.name))
-            aux.add(JTextField(a.value))
-            attributes.add(aux)
+            var att = ComponentAtt(a)
+            attPanel.add(att)
             revalidate()
             repaint()
         }
@@ -360,6 +332,47 @@ class GUI(var xml: XML): JFrame("XMLEditor"){
             }
             revalidate()
             repaint()
+        }
+
+    }
+
+    inner class ComponentAtt(var attribute: Attribute): JPanel(){
+
+        var name = JLabel("")
+        var value= JTextField("")
+
+        init {
+            layout = FlowLayout()
+            name.text = attribute.name
+            value.text = attribute.value
+            value.addActionListener{
+                attribute.value  = value.text
+            }
+            add(name)
+            add(value)
+            createPopupMenu()
+        }
+
+        private fun createPopupMenu() {
+
+            val popupmenu = JPopupMenu("Actions")
+
+            val delete = JMenuItem("Delete Attribute")
+            delete.addActionListener {
+                attribute.owner!!.attribute.remove(attribute)
+                val aux = parent
+                aux.remove(this)
+                aux.revalidate()
+                aux.repaint()
+            }
+            popupmenu.add(delete)
+
+            addMouseListener(object : java.awt.event.MouseAdapter() {
+                override fun mouseClicked(e: MouseEvent) {
+                    if (SwingUtilities.isRightMouseButton(e))
+                        popupmenu.show(this@ComponentAtt, e.x, e.y)
+                }
+            })
         }
 
     }
