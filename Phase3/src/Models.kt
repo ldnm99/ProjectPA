@@ -6,12 +6,12 @@ interface Visitor {
     fun endvisitatt(a: Array<Attribute>){}
 }
 
-abstract class Element( val parent: Entity? = null) : IObservable<(EventType,String , String?)-> Unit>{
+abstract class Element(var parent: Entity? = null) {
     init { parent?.children?.add(this) }
     val depth: Int
         get() =
             if (parent == null) 0
-            else 1 + parent.depth
+            else 1 + parent!!.depth
 
     abstract fun accept(visitor: Visitor)
 }
@@ -20,12 +20,9 @@ class Prolog(var encoding: String, var version: String) : Element(){
     override fun accept(visitor: Visitor) {
         visitor.visit(this)
     }
-
-    override val observers: MutableList<(EventType, String, String?) -> Unit>
-        get() = TODO("Not yet implemented")
 }
 
-class Entity(var name: String, parent: Entity? = null) : Element(parent){
+class Entity(var name: String, parent: Entity? = null) : Element(parent), IObservable<(EventType, Element, Element?) -> Unit>{
     var value  :String ?= null
     var children   = mutableListOf<Element>()
     var attribute  = mutableListOf<Attribute>()
@@ -39,58 +36,7 @@ class Entity(var name: String, parent: Entity? = null) : Element(parent){
             value = text
             specialChar()
         }else{
-            foo()
-        }
-    }
-
-    fun addChild(cName:String){
-        if(children.add(Entity(cName,this))){
-            notifyObservers {
-                it(EventType.ADD,"cName",null)
-            }
-        }
-    }
-
-    fun removeChild(cName: String){
-        run breaker@{
-            children.forEach {
-                it as Entity
-                if (it.name.equals(cName)) return@breaker
-                children.remove(it)
-            }
-        }
-        notifyObservers {
-            it(EventType.REMOVE, cName, null)
-        }
-    }
-
-    fun rename(newName:String, oldName:String){
-        if(oldName != newName){
-            this.name=newName
-            notifyObservers {
-                it(EventType.RENAME, newName,oldName)
-            }
-        }
-    }
-
-    fun addAtt(a: Attribute){
-        if(attribute.add(a)){
-            notifyObservers {
-                it(EventType.ADD,"a",null)
-            }
-        }
-    }
-
-    fun removeAtt(a: Attribute){
-        run breaker@{
-            attribute.forEach {
-                it as Attribute
-                if (it == a) return@breaker
-                attribute.remove(it)
-            }
-        }
-        notifyObservers {
-            it(EventType.REMOVE, a.name, null)
+            throw UnsupportedOperationException("An entity can only have text or children entities.Not both")
         }
     }
 
@@ -111,8 +57,28 @@ class Entity(var name: String, parent: Entity? = null) : Element(parent){
     fun getAttribute(value: String): Attribute? {
         var att: Attribute? = null
         attribute.forEach{
-            if (it.name.equals(value))
+            if (it.name == value)
                 att = it
+        }
+        return att
+    }
+
+    //returns string with specific name
+    fun getAttributeName(value: String): String? {
+        var att: String? = null
+        attribute.forEach{
+            if (it.name == value)
+                att = it.name
+        }
+        return att
+    }
+
+    //returns attribute with specific name
+    fun getAttributeValue(value: String): String? {
+        var att: String? = null
+        attribute.forEach{
+            if (it.value == value)
+                att = it.value
         }
         return att
     }
@@ -138,11 +104,70 @@ class Entity(var name: String, parent: Entity? = null) : Element(parent){
         visitor.endvisit(this)
     }
 
-    override val observers: MutableList<(EventType, String, String?) -> Unit>
-        get() = TODO("Not yet implemented")
+    override val observers: MutableList<(EventType, Element, Element?) -> Unit> = mutableListOf()
+
+    fun addChild(e: Entity){
+        e.parent = this
+        if(children.add(e)){
+            notifyObservers {
+                it(EventType.ADDEnt,e,null)
+            }
+        }
+    }
+
+    fun removeChild(e: Entity){
+        children.remove(e)
+        notifyObservers {
+            it(EventType.REMOVEEnt, this, null)
+        }
+    }
+
+    fun removeEnt(e: Entity){
+        e.parent?.children?.remove(e)
+        notifyObservers {
+            it(EventType.REMOVEEnt, e, null)
+        }
+    }
+
+    fun rename(newName:String, oldName:String){
+        if(oldName != newName){
+            this.name = newName
+            notifyObservers {
+                it(EventType.RENAMEEnt, this, null )
+            }
+        }
+    }
+
+    fun addAtt(a: Attribute){
+        if(attribute.add(a)){
+            notifyObservers {
+                it(EventType.ADDAtt,a,null)
+            }
+        }
+    }
+
+
 }
 
-class Attribute(var name: String, var value: String, parent: Entity? = null) : Element(){
+class Attribute(var name: String, var value: String, var owner: Entity? = null) : Element(), IObservable<(EventType, Element, Element?) -> Unit>{
+
+    fun removeAtt(a: Attribute){
+        a.owner?.attribute?.remove(a)
+        notifyObservers {
+            it(EventType.REMOVEAtt, a, null)
+        }
+    }
+
+    fun rename(a: Attribute,oldName: String, newName: String){
+        if(oldName != newName){
+            a.value = newName
+            notifyObservers {
+                it(EventType.RENAMEAtt, a, null)
+            }
+        }
+    }
+
+    override val observers: MutableList<(EventType, Element, Element?) -> Unit> = mutableListOf()
 
     override fun toString(): String {
         return " $name=\"$value\""
@@ -151,30 +176,13 @@ class Attribute(var name: String, var value: String, parent: Entity? = null) : E
     override fun accept(visitor: Visitor) {
         visitor.visit(this)
     }
-
-    fun replaceValue(oldValue:String, newValue:String ){
-        if(oldValue != newValue){
-            this.value=newValue
-            notifyObservers {
-                it(EventType.RENAME, newValue,oldValue)
-            }
-        }
-    }
-
-    override val observers: MutableList<(EventType, String, String?) -> Unit>
-        get() = TODO("Not yet implemented")
 }
 
-class XML(var header: Prolog?= null, var root: Entity){
+class XML(var header: Prolog?= null, var tree: Entity){
 
     fun getXML(): XML {
         return this
     }
 }
 
-
-@Throws(UnsupportedOperationException::class)
-fun foo() {
-    throw UnsupportedOperationException("An entity can only have text or children entities.Not both")
-}
 

@@ -106,15 +106,15 @@ fun serializationTree(element: Element, header: String) : String {
 
     val text = object : Visitor {
         var adder = header + "\n"
-        override fun visit(entity: Entity): Boolean {
-            adder = addText(entity,adder)
+        override fun visit(e: Entity): Boolean {
+            adder = addText(e,adder)
             return true
         }
-        override fun endvisit(entity: Entity) {
-            adder += if(entity.depth == 0){
-                tab(entity.depth) + "<" + entity.name + "/>"
+        override fun endvisit(e: Entity) {
+            adder += if(e.depth == 0){
+                tab(e.depth) + "<" + e.name + "/>"
             }else{
-                tab(entity.depth) + "<" + entity.name + "/>"+ "\n"
+                tab(e.depth) + "<" + e.name + "/>"+ "\n"
             }
 
         }

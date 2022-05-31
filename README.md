@@ -5,7 +5,7 @@
 - Phase 1 - Data Structure and Simple Operations
 - Phase 2 - Reflection
 - Phase 3 - XML Editor
-- Phase 4 - XML Editor with Plugins
+- Phase 4 - XML Editor with Plugins **Not Completed**
 
 # **How to use:**
 Para criar um ficheiro XML pode começar por definir a versão e a codificação do seu  ficheiro instanciando a classe "Prolog" sendo a mesma optativa.
@@ -15,61 +15,74 @@ Visto que esta "Entity" atua como raiz irá ter como nulo o atributo referente a
 
 Para relacionar herarquicamente as diversas "Entity" necessita de definir o seu progenitor quando instancia a classe.
 
-Para efeitos de simplificação, uma "Entity" apenas pode conter ou texto ou um conjunto de outras "Entity".
-Uma  "Entity" pode ter ou não atributos.
+Para simplificar, uma "Entity" apenas pode conter ou texto, ou um conjunto de outras "Entity".
+Uma "Entity" pode ter ou não atributos.
 
-A classe Entity contem uma lista da classe Entity, uma lista da classe Attribute e vários atributos do tipo String.
-A classe Attribute contem um nome e um valor ambos String.
+A classe Entity contem uma lista da classe Entity, uma lista da classe Attribute e vários atributos String.
+A classe Attribute contem um nome e um valor.
 ***
 # **Objects Definition Example:**
 
-* ### Create XML with different "Entity" and a "Prolog":  
+* ### Create XML with different "Entity" objects and a "Prolog":  
 
 ```
-    val xmlheader = Prolog("UTF-8","1.0")
+    val xmlHeader = Prolog("UTF-8", "1.0")
 
-    val xmlobject = Entity("Bookstore",null)
-    xmlobject.attribute.add( Attribute("Owner","Lourenco"))
-    xmlobject.attribute.add( Attribute("Category","Good Books"))
+    val xmlTree = Entity("Bookstore", null)
+    xmlTree.attribute.add(Attribute("Owner", "Lourenco"))
+    xmlTree.attribute.add(Attribute("Category", "Good Books"))
 
-    val children1 = Entity("1984",xmlobject)
-    children1.setText("Random text")
-    children1.attribute.add(Attribute("ID","Book1"))
+    val children1 = Entity("1984", xmlTree)
+    children1.attribute.add(Attribute("ID", "Book1"))
 
-    val children2 = Entity("Odyssey", xmlobject)
-    children2.attribute.add(Attribute("ID","Book2"))
+    val children2 = Entity("Odyssey", xmlTree)
+    children2.attribute.add(Attribute("ID", "Book2"))
 
-    val children3 = Entity("Chapter1",children2)
+    val children3 = Entity("Chapter1", children2)
     children3.setText("Random long text")
-    children3.attribute.add(Attribute("Name","Intro"))
+    children3.attribute.add(Attribute("Name", "Intro"))
 
     val children4 = Entity("Chapter2", children2)
     children4.setText("Random long text")
+
+    val children5 = Entity("C1",children1)
+    children5.setText("Random long text")
+    children5.attribute.add(Attribute("Name","Intro"))
+
+    val children6 = Entity("C2",children1)
+    children6.setText("Random long text")
+    children6.attribute.add(Attribute("Name","Intro"))
+
+    val xml = XML(xmlHeader,xmlTree)
 ```
 
 # **Simple Operations:**
 
 * ### Serialize a XML document to a textual String:
 ```
-val header: String = serializationheader(p)
-var text : String = serialization(xmlobject, header)
+val text : String = serialization(xml)
 ```
 
 * ### Find an "Entity" with a specific attribute number:
 ```
-var result = find(xmlobject,nAttribute(2))
+var entitysearched = find(xml,nAttribute(2))
 ```
 
 * ### Find an "Entity" with a specific number of children :
 ```
-var result = find(xmlobject,nChild(2))
+var entitysearched = find(xml,nChild(2))
 ```
-
 
 * ### Find an "Entity" with a specific name:
 ```
-var result = find(xmlobject,entityName("Chapter1"))
+var entitysearched = find(xml,entityName("Chapter1"))
 ```
+
+* ### Filter an XML given a condition (in this case Entities and their children with a given attribute):
+```
+val xmlFiltered = filterEntity(xml, vAttribute("Book1"))
+```
+
 
 ***
 # **Reflection Usage:**
@@ -104,8 +117,6 @@ var mobyDick: Book = Book(   1, "Moby Dick", false, Categories.Fiction, listOf(c
 var xml = createXML(mobyDick, "1.0", "UTF-8")
 ```
 
-***
-# **XML Editor:**
 
 
 

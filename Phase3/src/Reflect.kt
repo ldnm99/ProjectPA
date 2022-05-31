@@ -36,7 +36,7 @@ enum class Categories {Fiction, Comedy, Romance}
 private fun KClassifier?.isEnum() = this is KClass<*> && this.isSubclassOf(Enum::class)
 
 fun createXML(a:Any, encoding: String?, version: String?): XML {
-    var root: Entity = createTree(a)
+    val root: Entity = createTree(a)
     var header: Prolog?=null
     if (encoding != null && version != null) {
         header = Prolog(encoding, version)
@@ -71,10 +71,10 @@ private fun mapObject(a: Any?):String{
 
 private fun createTree(c:Any, parent: Entity?= null): Entity {
     fun aux(c:Any, parent: Entity){
-        var proper = proper(c::class)
+        val proper = proper(c::class)
         proper.forEach {
             if (!it.hasAnnotation<XmlIgnore>()) {
-                var a: Any? = it.call(c)
+                val a: Any? = it.call(c)
                 if (it.hasAnnotation<XmlTagContent>()) {
                     createElement(parent, it, a, 0)
                 } else
@@ -82,8 +82,8 @@ private fun createTree(c:Any, parent: Entity?= null): Entity {
             }
         }
     }
-    var root: Entity
-    var name = getClassName(c::class)
+    val root: Entity
+    val name = getClassName(c::class)
     root = if(parent == null) {
         Entity(name = name!!)
     }
@@ -99,16 +99,16 @@ private fun createTree(c:Any, parent: Entity?= null): Entity {
 private fun createElement(parent: Entity, p: KProperty<*>, a: Any?, identifier: Int){
     if(a !is Collection<*> ) {
         if(identifier == 0){
-            var e = Entity(name = getPropName(p), parent = parent)
+            val e = Entity(name = getPropName(p), parent = parent)
             e.value = mapObject(a)
         }else if(identifier == 1){
             if(a !is Collection<*> || !a.first()!!::class.isData){
-                var att = Attribute(name = getPropName(p), value = mapObject(a), parent = parent)
+                val att = Attribute(name = getPropName(p), value = mapObject(a), owner = parent)
                 parent.attribute.add(att)
             }
         }
     }else{
-        var c = Entity(getPropName(p), parent = parent)
+        val c = Entity(getPropName(p), parent = parent)
         a.forEach {
                 temp ->
             if (temp!!::class.isData) {
